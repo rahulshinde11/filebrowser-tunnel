@@ -1,0 +1,19 @@
+# Binaries
+filebrowser-tunnel
+filebrowser-tunnel-*
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test
+coverage.out
+
