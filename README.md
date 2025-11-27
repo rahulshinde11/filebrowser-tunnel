@@ -9,13 +9,13 @@ Expose any directory via a public URL with one command. Combines [filebrowser](h
 The easiest way to install:
 
 ```bash
-curl -sL https://rahulshinde11.github.io/filebrowser-tunnel | sh
+curl -fsSL https://rahulshinde11.github.io/filebrowser-tunnel/install.sh | sh
 ```
 
 Or with a specific directory:
 
 ```bash
-curl -sL https://rahulshinde11.github.io/filebrowser-tunnel | sh -s -- /path/to/share
+curl -fsSL https://rahulshinde11.github.io/filebrowser-tunnel/install.sh | sh -s -- /path/to/share
 ```
 
 ### Direct Download
@@ -76,7 +76,9 @@ filebrowser-tunnel/
 ├── scripts/
 │   ├── build.sh                 # Cross-platform build script
 │   ├── publish.sh               # Docker build and push
-│   ├── install.sh.template      # curl | sh install template
+│   ├── generate-index.sh        # Generates index.html and install.sh
+│   ├── index.html.template      # Landing page template
+│   ├── install.sh.template      # Install script template
 │   └── docker-entrypoint.sh     # Docker entrypoint
 ├── Dockerfile
 ├── Makefile
@@ -127,13 +129,13 @@ This project is automatically deployed to GitHub Pages on every release!
 **No setup required** - Just use the hosted version:
 
 ```bash
-curl -sL https://rahulshinde11.github.io/filebrowser-tunnel/ | sh
+curl -fsSL https://rahulshinde11.github.io/filebrowser-tunnel/install.sh | sh
 ```
 
 **How it works:**
 - Push a tag → GitHub Actions deploys to GitHub Pages
-- Uses a "polyglot" file that works as both HTML (browsers) and shell script (curl)
-- Browsers see a landing page, curl gets the install script
+- `index.html` - Landing page for browsers
+- `install.sh` - Install script for curl
 
 **To enable for your fork:**
 1. Go to Settings → Pages
@@ -196,8 +198,10 @@ git push origin v1.0.0
 Users can then run:
 
 ```bash
-curl -sL https://your-domain.com | sh
+curl -fsSL https://your-domain.com | sh
 ```
+
+> **Note:** The nginx config automatically detects curl/wget and serves the install script, so no `/install.sh` path is needed for self-hosted deployments.
 
 
 
