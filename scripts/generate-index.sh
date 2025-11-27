@@ -10,8 +10,7 @@ BASE_URL="https://github.com/${REPO}/releases/download/${VERSION}"
 
 cat > index.html << 'EOF'
 #!/bin/sh
-# shellcheck disable=SC2317
-: <<'HTML_CONTENT'
+true <<'ENDOFHTML'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,7 +133,7 @@ cat > index.html << 'EOF'
         <h2 style="margin-top: 32px; margin-bottom: 16px; color: #333;">Quick Start</h2>
         <div class="code-block">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-            <code id="install-cmd">curl -sL REPLACE_BASE_URL/install.sh | sh</code>
+            <code id="install-cmd">curl -sL REPLACE_BASE_URL | sh</code>
         </div>
 
         <div class="note">
@@ -160,7 +159,7 @@ cat > index.html << 'EOF'
     <script>
         // Replace placeholders with actual values
         const REPO = 'REPLACE_REPO';
-        const BASE_URL = window.location.origin + window.location.pathname.replace(/\/$/, '');
+        const BASE_URL = window.location.href.replace(/\/$/, '');
         const REPO_URL = 'https://github.com/' + REPO;
         
         document.body.innerHTML = document.body.innerHTML
@@ -182,81 +181,71 @@ cat > index.html << 'EOF'
     </script>
 </body>
 </html>
-HTML_CONTENT
+ENDOFHTML
 
-# Shell script section (executed by curl | sh)
-REPO="REPLACE_REPO"
-VERSION="REPLACE_VERSION"
-BASE_URL="REPLACE_DOWNLOAD_URL"
+DOMAIN="REPLACE_DOMAIN"
+BINARY_NAME="filebrowser-tunnel"
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
 
-detect_platform() {
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    ARCH=$(uname -m)
-    
-    case "$ARCH" in
-        x86_64|amd64) ARCH="amd64" ;;
-        aarch64|arm64) ARCH="arm64" ;;
-        *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
-    esac
-    
-    case "$OS" in
-        linux|darwin) ;;
-        *) echo "Unsupported OS: $OS" >&2; exit 1 ;;
-    esac
-    
-    echo "${OS}-${ARCH}"
+# Map architectures
+case "${ARCH}" in
+    x86_64) ARCH="amd64" ;;
+    aarch64|arm64) ARCH="arm64" ;;
+esac
+
+# Check for supported platforms
+if [ "$OS" != "linux" ] && [ "$OS" != "darwin" ]; then
+    echo "Error: Unsupported OS: $OS"
+    exit 1
+fi
+
+if [ "$ARCH" != "amd64" ] && [ "$ARCH" != "arm64" ]; then
+    echo "Error: Unsupported Architecture: $ARCH"
+    exit 1
+fi
+
+FULL_BINARY_NAME="${BINARY_NAME}-${OS}-${ARCH}"
+DOWNLOAD_URL="${DOMAIN}/${FULL_BINARY_NAME}"
+
+# Create a temp file
+if [ -d "/tmp" ]; then
+    TMP_FILE="/tmp/${BINARY_NAME}-$$"
+else
+    TMP_FILE="./${BINARY_NAME}-$$"
+fi
+
+# Cleanup function
+cleanup() {
+    rm -f "${TMP_FILE}"
 }
+trap cleanup EXIT
 
-main() {
-    PLATFORM=$(detect_platform)
-    BINARY_NAME="filebrowser-tunnel-${PLATFORM}"
-    DOWNLOAD_URL="${BASE_URL}/${BINARY_NAME}"
-    INSTALL_DIR="${HOME}/.local/bin"
-    INSTALL_PATH="${INSTALL_DIR}/filebrowser-tunnel"
-    
-    echo "Installing filebrowser-tunnel for ${PLATFORM}..."
-    
-    # Create install directory
-    mkdir -p "$INSTALL_DIR"
-    
-    # Download binary
-    echo "Downloading from ${DOWNLOAD_URL}..."
-    if command -v curl >/dev/null 2>&1; then
-        curl -fsSL "$DOWNLOAD_URL" -o "$INSTALL_PATH"
-    elif command -v wget >/dev/null 2>&1; then
-        wget -q "$DOWNLOAD_URL" -O "$INSTALL_PATH"
-    else
-        echo "Error: curl or wget required" >&2
+# Download
+echo "Downloading ${FULL_BINARY_NAME} from ${DOMAIN}..."
+if command -v curl >/dev/null 2>&1; then
+    STATUS=$(curl -w "%{http_code}" -fsSL -o "${TMP_FILE}" "${DOWNLOAD_URL}")
+    if [ "$STATUS" != "200" ] && [ ! -f "${TMP_FILE}" ]; then
+        echo "Error: Failed to download binary (HTTP $STATUS)"
         exit 1
     fi
-    
-    # Make executable
-    chmod +x "$INSTALL_PATH"
-    
-    echo ""
-    echo "✅ Installation complete!"
-    echo ""
-    echo "📍 Installed to: $INSTALL_PATH"
-    echo ""
-    
-    # Check if in PATH
-    if echo "$PATH" | grep -q "$INSTALL_DIR"; then
-        echo "🚀 You can now run: filebrowser-tunnel"
-    else
-        echo "⚠️  Add to PATH by running:"
-        echo "   export PATH=\"\$HOME/.local/bin:\$PATH\""
-        echo ""
-        echo "   Or run directly: $INSTALL_PATH"
-    fi
-}
+elif command -v wget >/dev/null 2>&1; then
+    wget -qO "${TMP_FILE}" "${DOWNLOAD_URL}"
+else
+    echo "Error: curl or wget is required"
+    exit 1
+fi
 
-main "$@"
+chmod +x "${TMP_FILE}"
+
+echo "Running ${BINARY_NAME}..."
+echo "=========================="
+"${TMP_FILE}" "$@"
 EOF
 
 # Replace placeholders
 sed -i.bak "s|REPLACE_REPO|${REPO}|g" index.html
-sed -i.bak "s|REPLACE_VERSION|${VERSION}|g" index.html
-sed -i.bak "s|REPLACE_DOWNLOAD_URL|${BASE_URL}|g" index.html
+sed -i.bak "s|REPLACE_DOMAIN|https://github.com/${REPO}/releases/download/${VERSION}|g" index.html
 rm -f index.html.bak
 
 echo "Generated index.html"
