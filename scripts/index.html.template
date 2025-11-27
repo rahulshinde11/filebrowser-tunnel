@@ -284,6 +284,17 @@
             border-radius: 50%;
         }
 
+        .code-hint {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .code-hint code {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
         footer {
             margin-top: 4rem;
             text-align: center;
@@ -355,11 +366,24 @@
             <div class="code-block">
                 <div class="code-content">
                     <code><span class="prompt">$</span> curl -fsSL {{DOMAIN}} | sh</code>
-                    <button class="copy-btn" onclick="copyCommand()">
+                    <button class="copy-btn" onclick="copyCommand(this, 'curl -fsSL {{DOMAIN}} | sh')">
                         <span class="btn-text">Copy</span>
                     </button>
                 </div>
             </div>
+        </section>
+
+        <section class="install-section" style="margin-top: 1.5rem; animation: fadeInUp 0.8s ease-out 0.15s both;">
+            <p class="section-title">Run for a specific directory</p>
+            <div class="code-block">
+                <div class="code-content">
+                    <code><span class="prompt">$</span> curl -fsSL {{DOMAIN}} | sh -s -- /path/to/directory</code>
+                    <button class="copy-btn" onclick="copyCommand(this, 'curl -fsSL {{DOMAIN}} | sh -s -- /path/to/directory')">
+                        <span class="btn-text">Copy</span>
+                    </button>
+                </div>
+            </div>
+            <p class="code-hint">Replace <code>/path/to/directory</code> with your target folder</p>
         </section>
 
         <section class="features">
@@ -402,10 +426,7 @@
     </div>
 
     <script>
-        const command = 'curl -fsSL {{DOMAIN}} | sh';
-        
-        async function copyCommand() {
-            const btn = document.querySelector('.copy-btn');
+        async function copyCommand(btn, command) {
             const btnText = btn.querySelector('.btn-text');
             
             try {
