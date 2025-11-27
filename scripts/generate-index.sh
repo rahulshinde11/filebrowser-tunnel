@@ -260,4 +260,3 @@ sed -i.bak "s|REPLACE_DOWNLOAD_URL|${BASE_URL}|g" index.html
 rm -f index.html.bak
 
 echo "Generated index.html"
-EOF
