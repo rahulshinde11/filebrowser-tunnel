@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filebrowser Tunnel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a24;
+            --accent: #00d4aa;
+            --accent-dim: #00d4aa33;
+            --accent-glow: #00d4aa55;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --text-muted: #55556a;
+            --border: #2a2a3a;
+            --code-bg: #0d0d14;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+            background-image: 
+                radial-gradient(circle at 20% 80%, var(--accent-dim) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, #6366f133 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, #8b5cf622 0%, transparent 40%);
+        }
+
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.15;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            font-weight: 300;
+        }
+
+        .install-section {
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .code-block:hover {
+            border-color: var(--accent-dim);
+            box-shadow: 0 0 40px var(--accent-dim);
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .code-block:hover::before {
+            opacity: 1;
+        }
+
+        .code-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        .prompt {
+            color: var(--accent);
+            user-select: none;
+        }
+
+        .copy-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .copy-btn.copied {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .features {
+            margin-top: 3rem;
+            display: grid;
+            gap: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .feature {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateX(4px);
+            border-color: var(--accent-dim);
+        }
+
+        .feature-icon {
+            font-size: 1.25rem;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-content h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .platforms {
+            margin-top: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .platform-list {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .platform {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .platform-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        footer a:hover {
+            opacity: 0.8;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .code-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            code {
+                font-size: 0.8rem;
+            }
+
+            .copy-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="grid-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <h1>Filebrowser Tunnel</h1>
+            </div>
+            <p class="tagline">Instant file browser with secure tunnel access</p>
+        </header>
+
+        <section class="install-section">
+            <p class="section-title">Quick Install</p>
+            <div class="code-block">
+                <div class="code-content">
+                    <code><span class="prompt">$</span> curl -fsSL {{DOMAIN}} | sh</code>
+                    <button class="copy-btn" onclick="copyCommand()">
+                        <span class="btn-text">Copy</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature">
+                <div class="feature-icon">🚀</div>
+                <div class="feature-content">
+                    <h3>One Command Setup</h3>
+                    <p>Auto-detects your OS and architecture, downloads the right binary</p>
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-content">
+                    <h3>Secure Tunnel</h3>
+                    <p>Access your files from anywhere through a secure tunnel</p>
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📁</div>
+                <div class="feature-content">
+                    <h3>File Browser</h3>
+                    <p>Beautiful web UI to browse, upload, and manage your files</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="platforms">
+            <p class="section-title">Supported Platforms</p>
+            <div class="platform-list">
+                <div class="platform"><span class="platform-dot"></span>linux/amd64</div>
+                <div class="platform"><span class="platform-dot"></span>linux/arm64</div>
+                <div class="platform"><span class="platform-dot"></span>darwin/amd64</div>
+                <div class="platform"><span class="platform-dot"></span>darwin/arm64</div>
+            </div>
+        </section>
+
+        <footer>
+            <p>View the <a href="/install.sh">install script</a> directly</p>
+        </footer>
+    </div>
+
+    <script>
+        const command = 'curl -fsSL {{DOMAIN}} | sh';
+        
+        async function copyCommand() {
+            const btn = document.querySelector('.copy-btn');
+            const btnText = btn.querySelector('.btn-text');
+            
+            try {
+                await navigator.clipboard.writeText(command);
+                btn.classList.add('copied');
+                btnText.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btnText.textContent = 'Copy';
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = command;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                btn.classList.add('copied');
+                btnText.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btnText.textContent = 'Copy';
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
+

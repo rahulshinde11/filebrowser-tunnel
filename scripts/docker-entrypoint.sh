@@ -10,11 +10,13 @@ fi
 # Remove trailing slash if present to avoid double slashes
 DOMAIN=$(echo "$DOMAIN" | sed 's:/*$::')
 
-echo "Generating index.html (install script) with domain: $DOMAIN"
+echo "Generating pages with domain: $DOMAIN"
 
-# Replace placeholder and save as index.html so it's served at root
-sed "s|{{DOMAIN}}|${DOMAIN}|g" /usr/share/nginx/html/install.sh.template > /usr/share/nginx/html/index.html
+# Generate install.sh (served to curl/wget)
+sed "s|{{DOMAIN}}|${DOMAIN}|g" /usr/share/nginx/html/install.sh.template > /usr/share/nginx/html/install.sh
+
+# Generate index.html (served to browsers)
+sed "s|{{DOMAIN}}|${DOMAIN}|g" /usr/share/nginx/html/index.html.template > /usr/share/nginx/html/index.html
 
 # Execute the CMD (nginx)
 exec "$@"
-
