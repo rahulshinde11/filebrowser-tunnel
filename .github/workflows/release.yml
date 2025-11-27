@@ -76,13 +76,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate index page
+      - name: Prepare Pages directory
         run: |
+          mkdir -p _site
           chmod +x scripts/generate-index.sh
           scripts/generate-index.sh "${{ github.repository }}" "${{ github.ref_name }}"
-
-      - name: Create .nojekyll
-        run: touch .nojekyll
+          mv index.html _site/
+          mv install.sh _site/
+          touch _site/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -90,7 +91,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
