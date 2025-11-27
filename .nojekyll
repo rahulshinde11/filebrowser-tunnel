@@ -1,0 +1,2 @@
+# This file prevents GitHub Pages from processing files with Jekyll
+# We need raw files to be served as-is for the polyglot script to work

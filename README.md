@@ -4,23 +4,23 @@ Expose any directory via a public URL with one command. Combines [filebrowser](h
 
 ## Quick Start
 
-### One-liner (via curl)
+### One-liner (Hosted on GitHub Pages)
 
-If you have a server hosting this tool:
+The easiest way to install:
 
 ```bash
-curl -sL https://your-domain.com | sh
+curl -sL https://rahulshinde11.github.io/filebrowser-tunnel | sh
 ```
 
 Or with a specific directory:
 
 ```bash
-curl -sL https://your-domain.com | sh -s -- /path/to/share
+curl -sL https://rahulshinde11.github.io/filebrowser-tunnel | sh -s -- /path/to/share
 ```
 
 ### Direct Download
 
-Download the binary for your platform from the releases and run:
+Download the binary for your platform from the [releases page](https://github.com/rahulshinde11/filebrowser-tunnel/releases/latest) and run:
 
 ```bash
 ./filebrowser-tunnel              # Serve current directory
@@ -118,27 +118,77 @@ make clean         # Clean build artifacts
 make run           # Build and run locally
 ```
 
-## Docker Distribution
+## Self-Hosting
 
-Host your own distribution server:
+### GitHub Pages (Free Static Hosting)
 
-### Build and Push
+This project is automatically deployed to GitHub Pages on every release!
+
+**No setup required** - Just use the hosted version:
 
 ```bash
-# Set your Docker Hub username
-export DOCKER_USER=yourusername
-
-# Build and publish
-./scripts/publish.sh
+curl -sL https://rahulshinde11.github.io/filebrowser-tunnel/ | sh
 ```
 
-### Deploy Server
+**How it works:**
+- Push a tag → GitHub Actions deploys to GitHub Pages
+- Uses a "polyglot" file that works as both HTML (browsers) and shell script (curl)
+- Browsers see a landing page, curl gets the install script
+
+**To enable for your fork:**
+1. Go to Settings → Pages
+2. Source: "GitHub Actions"
+3. Your distribution will be at `https://yourusername.github.io/filebrowser-tunnel/`
+
+---
+
+### Docker Container (GHCR)
+
+Host your own distribution server using GitHub Container Registry:
+
+#### Using Pre-built Image from GHCR
 
 ```bash
+# Pull and run the latest version
 docker run -d \
   -p 80:80 \
   -e DOMAIN=https://your-domain.com \
-  yourusername/filebrowser-tunnel:latest
+  ghcr.io/rahulshinde11/filebrowser-tunnel:latest
+
+# Or use a specific version
+docker run -d \
+  -p 80:80 \
+  -e DOMAIN=https://your-domain.com \
+  ghcr.io/rahulshinde11/filebrowser-tunnel:v1.0.0
+```
+
+#### Building and Pushing to Your Own Registry
+
+```bash
+# Build for all platforms
+make build-all
+
+# Build Docker image
+make docker-image
+
+# Push to your own GHCR (or Docker Hub)
+docker tag filebrowser-tunnel:latest ghcr.io/yourusername/filebrowser-tunnel:latest
+docker push ghcr.io/yourusername/filebrowser-tunnel:latest
+```
+
+---
+
+### Automatic Releases (CI/CD)
+
+This project uses GitHub Actions for automatic releases:
+
+- **Push to `main`** → Automatically deploys Docker image as `:main` tag to GHCR
+- **Push a tag** (e.g., `v1.0.0`) → Creates GitHub Release with binaries + deploys versioned Docker images **+ deploys to GitHub Pages**
+
+```bash
+# Create and push release
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 ### User Access
@@ -148,6 +198,8 @@ Users can then run:
 ```bash
 curl -sL https://your-domain.com | sh
 ```
+
+
 
 ## Cache Location
 
