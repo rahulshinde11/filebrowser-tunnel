@@ -32,7 +32,7 @@ jobs:
           sudo apt-get install -y upx
 
       - name: Build Binaries
-        run: make build-all UPX=1 VERSION=${{ github.ref_name }}
+        run: make build-all COMPRESS=1 VERSION=${{ github.ref_name }}
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')

@@ -5,15 +5,16 @@ VERSION := $(shell date +%Y%m%d-%H%M%S)
 BUILD_DIR := dist
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
-# Set UPX=1 to enable UPX compression (reduces binary size by ~50-70%)
-UPX_ENABLED ?= 0
-ifeq ($(UPX),1)
-	UPX_ENABLED := 1
+# Set COMPRESS=1 to enable UPX compression (reduces binary size by ~50-70%)
+# Note: We use COMPRESS instead of UPX to avoid conflict with UPX's own env var
+COMPRESS_ENABLED ?= 0
+ifeq ($(COMPRESS),1)
+	COMPRESS_ENABLED := 1
 endif
 
-# UPX compression command (only runs if UPX_ENABLED=1 and upx is installed)
+# UPX compression command (only runs if COMPRESS_ENABLED=1 and upx is installed)
 define compress_upx
-	@if [ "$(UPX_ENABLED)" = "1" ] && command -v upx >/dev/null 2>&1; then \
+	@if [ "$(COMPRESS_ENABLED)" = "1" ] && command -v upx >/dev/null 2>&1; then \
 		echo "Compressing with UPX..."; \
 		upx --best --lzma $(1) 2>/dev/null || upx --best $(1); \
 	fi
