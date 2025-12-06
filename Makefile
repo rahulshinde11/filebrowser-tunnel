@@ -44,8 +44,7 @@ darwin: ## Build macOS binaries (amd64 and arm64)
 	@mkdir -p $(BUILD_DIR)
 	@GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -trimpath -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
 	@GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -trimpath -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
-	$(call compress_upx,$(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64)
-	$(call compress_upx,$(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64)
+	@echo "Note: UPX compression skipped for macOS (not supported)"
 	@ls -lh $(BUILD_DIR)/$(BINARY_NAME)-darwin-*
 
 docker-build: ## Build Linux binary using Docker (internal target)
