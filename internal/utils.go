@@ -5,8 +5,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
+	"strings"
 )
 
 // GetCacheDir returns the cache directory for storing binaries
@@ -37,10 +37,28 @@ func GetFreePort() (int, error) {
 }
 
 // ExtractTunnelURL extracts the trycloudflare.com URL from cloudflared output
+// Uses simple string operations instead of regexp to reduce binary size
 func ExtractTunnelURL(output string) string {
-	re := regexp.MustCompile(`https://[a-zA-Z0-9-]+\.trycloudflare\.com`)
-	match := re.FindString(output)
-	return match
+	const suffix = ".trycloudflare.com"
+	idx := strings.Index(output, suffix)
+	if idx == -1 {
+		return ""
+	}
+
+	// Find the start of the URL (look for https://)
+	start := strings.LastIndex(output[:idx], "https://")
+	if start == -1 {
+		return ""
+	}
+
+	// Extract URL and find where it ends
+	url := output[start:]
+	end := strings.Index(url[len("https://"):], suffix) + len("https://") + len(suffix)
+	if end > len(url) {
+		end = len(url)
+	}
+
+	return url[:end]
 }
 
 // GetPlatformInfo returns the current OS and architecture
@@ -88,4 +106,3 @@ func ClearCache() error {
 	fmt.Println("Cache cleared successfully")
 	return nil
 }
-

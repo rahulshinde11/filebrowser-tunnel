@@ -20,26 +20,12 @@ func main() {
 	cleanCache := flag.Bool("clean", false, "Clear cached binaries")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `filebrowser-tunnel - Expose a directory via Cloudflare tunnel
-
-Usage:
-  filebrowser-tunnel [options] [directory]
-
-Arguments:
-  directory    Directory to serve (default: current directory)
-
-Options:
-  --help       Show this help message
-  --version    Show version
-  --clean      Clear cached binaries and exit
-
-Examples:
-  filebrowser-tunnel                    # Serve current directory
-  filebrowser-tunnel /path/to/dir       # Serve specific directory
-  filebrowser-tunnel ~/Downloads        # Serve Downloads folder
-  filebrowser-tunnel --clean            # Clear cached binaries
-
-`)
+		fmt.Fprintln(os.Stderr, "filebrowser-tunnel - Expose directory via Cloudflare tunnel")
+		fmt.Fprintln(os.Stderr, "\nUsage: filebrowser-tunnel [options] [directory]")
+		fmt.Fprintln(os.Stderr, "\nOptions:")
+		fmt.Fprintln(os.Stderr, "  --help      Show help")
+		fmt.Fprintln(os.Stderr, "  --version   Show version")
+		fmt.Fprintln(os.Stderr, "  --clean     Clear cached binaries")
 	}
 
 	flag.Parse()
@@ -79,11 +65,8 @@ Examples:
 }
 
 func run(directory string) error {
-	fmt.Println("╔═══════════════════════════════════════════════════════════╗")
-	fmt.Println("║           filebrowser-tunnel                              ║")
-	fmt.Println("║   Expose your files securely via Cloudflare tunnel        ║")
-	fmt.Println("╚═══════════════════════════════════════════════════════════╝")
-	fmt.Println()
+	fmt.Println("=== filebrowser-tunnel ===")
+	fmt.Println("Expose files via Cloudflare tunnel")
 
 	// Ensure binaries are available
 	filebrowserPath, cloudflaredPath, err := internal.EnsureBinaries()
@@ -132,14 +115,8 @@ func run(directory string) error {
 	}
 
 	// Display the URL
-	fmt.Println()
-	fmt.Println("═══════════════════════════════════════════════════════════")
-	fmt.Println()
-	fmt.Printf("  🔗 Your filebrowser is available at:\n\n")
-	fmt.Printf("     %s\n\n", url)
-	fmt.Println("  Press Ctrl+C to stop")
-	fmt.Println()
-	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Printf("\n🔗 Access: %s\n", url)
+	fmt.Println("Press Ctrl+C to stop")
 	fmt.Println()
 
 	// Wait for processes to finish

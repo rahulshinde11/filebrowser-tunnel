@@ -1,9 +1,23 @@
-.PHONY: build build-all clean docker-build linux darwin help run
+.PHONY: build build-all clean docker-build linux darwin help run tiny
 
 BINARY_NAME := filebrowser-tunnel
 VERSION := $(shell date +%Y%m%d-%H%M%S)
 BUILD_DIR := dist
 LDFLAGS := -s -w -X main.version=$(VERSION)
+
+# Set UPX=1 to enable UPX compression (reduces binary size by ~50-70%)
+UPX_ENABLED ?= 0
+ifeq ($(UPX),1)
+	UPX_ENABLED := 1
+endif
+
+# UPX compression command (only runs if UPX_ENABLED=1 and upx is installed)
+define compress_upx
+	@if [ "$(UPX_ENABLED)" = "1" ] && command -v upx >/dev/null 2>&1; then \
+		echo "Compressing with UPX..."; \
+		upx --best --lzma $(1) 2>/dev/null || upx --best $(1); \
+	fi
+endef
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -21,12 +35,16 @@ linux: ## Build Linux binaries (amd64 and arm64)
 	@mkdir -p $(BUILD_DIR)
 	@$(MAKE) docker-build OS=linux ARCH=amd64
 	@$(MAKE) docker-build OS=linux ARCH=arm64
+	$(call compress_upx,$(BUILD_DIR)/$(BINARY_NAME)-linux-amd64)
+	$(call compress_upx,$(BUILD_DIR)/$(BINARY_NAME)-linux-arm64)
 
 darwin: ## Build macOS binaries (amd64 and arm64)
 	@echo "Building macOS binaries..."
 	@mkdir -p $(BUILD_DIR)
 	@GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -trimpath -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 .
 	@GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -trimpath -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 .
+	$(call compress_upx,$(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64)
+	$(call compress_upx,$(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64)
 	@ls -lh $(BUILD_DIR)/$(BINARY_NAME)-darwin-*
 
 docker-build: ## Build Linux binary using Docker (internal target)
@@ -52,3 +70,15 @@ docker-image: build-all ## Build Docker image
 docker-push: docker-image ## Push Docker image (requires DOCKER_USER env var)
 	docker tag $(BINARY_NAME):latest $(DOCKER_USER)/$(BINARY_NAME):latest
 	docker push $(DOCKER_USER)/$(BINARY_NAME):latest
+
+tiny: ## Build smallest possible binary (with UPX compression)
+	@echo "Building smallest possible binary..."
+	@mkdir -p $(BUILD_DIR)
+	@GOOS=darwin GOARCH=$(shell go env GOARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -trimpath -o $(BUILD_DIR)/$(BINARY_NAME)-tiny .
+	@if command -v upx >/dev/null 2>&1; then \
+		echo "Compressing with UPX..."; \
+		upx --best --lzma $(BUILD_DIR)/$(BINARY_NAME)-tiny 2>/dev/null || upx --best $(BUILD_DIR)/$(BINARY_NAME)-tiny; \
+	else \
+		echo "Note: Install UPX for additional 50-70% size reduction: brew install upx"; \
+	fi
+	@ls -lh $(BUILD_DIR)/$(BINARY_NAME)-tiny
