@@ -42,12 +42,18 @@ func (pm *ProcessManager) StartFilebrowser(binaryPath string, port int, director
 		return fmt.Errorf("directory does not exist: %s", absDir)
 	}
 
+	dbPath, err := GetFilebrowserDBPath()
+	if err != nil {
+		return fmt.Errorf("failed to resolve filebrowser database path: %w", err)
+	}
+
 	pm.filebrowserCmd = exec.Command(
 		binaryPath,
 		"--noauth",
-		"--address", "0.0.0.0",
+		"--address", "127.0.0.1",
 		"--port", fmt.Sprintf("%d", port),
 		"--root", absDir,
+		"--database", dbPath,
 	)
 
 	// Capture output for debugging
@@ -58,7 +64,7 @@ func (pm *ProcessManager) StartFilebrowser(binaryPath string, port int, director
 		return fmt.Errorf("failed to start filebrowser: %w", err)
 	}
 
-	fmt.Printf("🗂️  Filebrowser started on port %d (serving: %s)\n", port, absDir)
+	fmt.Printf("🗂️  Filebrowser started on localhost port %d (serving: %s)\n", port, absDir)
 	return nil
 }
 
@@ -210,4 +216,3 @@ func absPath(path string) (string, error) {
 
 	return cwd + "/" + path, nil
 }
-

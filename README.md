@@ -60,7 +60,7 @@ Examples:
 
 1. **Binary Detection** - Checks `~/.cache/filebrowser-tunnel/` for cached binaries
 2. **Auto Download** - If not cached, downloads filebrowser and cloudflared for your platform
-3. **Start Filebrowser** - Launches filebrowser on a random available port (no auth mode)
+3. **Start Filebrowser** - Launches filebrowser on a random localhost-only port (no auth mode)
 4. **Create Tunnel** - Starts cloudflared quick tunnel pointing to the local filebrowser
 5. **Display URL** - Shows the public `*.trycloudflare.com` URL
 
@@ -220,6 +220,8 @@ filebrowser-tunnel --clean
 ## Security Notes
 
 - The filebrowser instance runs in **no-auth mode** for convenience
+- Filebrowser binds to `127.0.0.1` only; the public entrypoint is the Cloudflare tunnel URL
+- Filebrowser stores its database in `~/.cache/filebrowser-tunnel/filebrowser.db`, not in the shared directory or shell working directory
 - The tunnel URL is randomly generated and not guessable
 - For sensitive data, consider adding authentication or using a different solution
 - Cloudflare tunnel traffic is encrypted end-to-end

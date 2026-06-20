@@ -24,9 +24,19 @@ func GetCacheDir() (string, error) {
 	return cacheDir, nil
 }
 
-// GetFreePort returns an available port by binding to :0
+// GetFilebrowserDBPath returns the database path used by filebrowser.
+func GetFilebrowserDBPath() (string, error) {
+	cacheDir, err := GetCacheDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(cacheDir, "filebrowser.db"), nil
+}
+
+// GetFreePort returns an available local-only port.
 func GetFreePort() (int, error) {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return 0, fmt.Errorf("failed to find free port: %w", err)
 	}
